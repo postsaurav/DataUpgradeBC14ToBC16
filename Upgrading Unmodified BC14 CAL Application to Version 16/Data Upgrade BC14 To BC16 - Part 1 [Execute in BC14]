@@ -1,0 +1,30 @@
+###################### Parameters - Change as per your Project ######################
+$ServiceName          = "bc140"                               ## Name of Service Mapped to Business Central 14 Database.
+$DeveloperLicenseFile = "C:\Upgrade Demo\Developer Lic.flf"   ## Developer License
+$NavIde = "C:\Program Files (x86)\Microsoft Dynamics 365 Business Central\140\RoleTailored Client\finsql.exe"
+######################################################################################
+
+
+Write-Host "1. Importing BC14 Powershell Module"
+Import-Module 'C:\Program Files\Microsoft Dynamics 365 Business Central\140\Service\NavAdminTool.ps1'
+
+Write-Host "2. Importing Developer License"
+Import-NAVServerLicense -LicenseFile $DeveloperLicenseFile -ServerInstance BC140
+
+Write-Host "3. Disabling Task Scheduler"
+Set-NAVServerConfiguration -KeyName "EnableTaskScheduler" -ServerInstance BC140 -KeyValue false
+
+Write-Host "4. Restarting NAV Service"
+Restart-NAVServerInstance -ServerInstance $ServiceName
+
+Write-Host "5. UnInstalling All Extensions from the application server instance."
+Get-NAVAppInfo -ServerInstance $ServiceName | % { Uninstall-NAVApp -ServerInstance $ServiceName -Name $_.Name -Version $_.Version -Force}
+
+Write-Host "6. Unpublish all extensions from the application server instance."
+Get-NAVAppInfo -ServerInstance $ServiceName | % { Unpublish-NAVApp -ServerInstance $ServiceName -Name $_.Name -Version $_.Version}
+
+Write-Host "7. UnPublishing All Symbol on Service"
+Get-NAVAppInfo -ServerInstance $ServiceName -SymbolsOnly | % { Unpublish-NAVApp -ServerInstance $ServiceName -Name $_.Name -Version $_.Version }
+
+Write-Host "8. Stopping NAV Service"
+Stop-NAVServerInstance -ServerInstance $ServiceName
